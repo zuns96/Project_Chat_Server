@@ -1,0 +1,8 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/.vs
+/ASPDotNetServer/.vs/ASPDotNetServer
+/ASPDotNetServer/ASPDotNetCore/bin
+/ASPDotNetServer/ASPDotNetCore/obj
