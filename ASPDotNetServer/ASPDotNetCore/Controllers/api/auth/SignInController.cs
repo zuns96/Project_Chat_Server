@@ -8,26 +8,30 @@ namespace ASPDotNetCore.Controllers.api.auth
     [ApiController]
     public class SignInController : ControllerBase
     {
-        public SignIn Post()
+        [HttpPost]
+        public ActionResult<Rpy_SignIn> Post(Req_SignIn req)
         {
-            SignIn rpy = P_Login();
+            string strID = req.strID;
+            string strPassword = req.strPassword;
 
-            return rpy;
+            Rpy_SignIn rpy = db_login(strID, strPassword);
+
+            return Ok(rpy);
         }
 
-        private SignIn P_Login()
+        private Rpy_SignIn db_login(string strID, string strPassword)
         {
             byte byRet = 0;
             string strUserName = string.Empty;
 
-            DBManager.ExcuteQuery(E_DB.E_DB_ACCOUNT, "CALL `p_login`('zuns96', 'IAmProgrammer@960115')", (reader) =>
+            DBManager.ExcuteQuery(E_DB.E_DB_ACCOUNT, string.Format("CALL `p_login`('{0}', '{1}')", strID, strPassword), (reader) =>
             {
                 reader.Read();
                 byRet = Convert.ToByte(reader[0]);
                 strUserName = Convert.ToString(reader[1]);
             });
 
-            return new SignIn() { byRet = byRet, strUserName = strUserName, };
+            return new Rpy_SignIn() { byRet = byRet, strUserName = strUserName, };
         }
     }
 }

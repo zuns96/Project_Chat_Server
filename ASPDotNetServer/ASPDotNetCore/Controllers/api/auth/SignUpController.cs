@@ -8,26 +8,29 @@ namespace ASPDotNetCore.Controllers.api.auth
     [ApiController]
     public class SignUpController : ControllerBase
     {
-        public SignUp Post()
+        [HttpPost]
+        public ActionResult<Rpy_SignUp> Post(Req_SignUp req)
         {
-            SignUp rpy = P_Account_Create();
+            string strID = req.strID;
+            string strPassword = req.strPassword;
+            Rpy_SignUp rpy = db_account_create(strID, strPassword);
 
-            return rpy;
+            return Ok(rpy);
         }
 
-        private SignUp P_Account_Create()
+        private Rpy_SignUp db_account_create(string strID, string strPassword)
         {
             byte byRet = 0;
             string strUserName = string.Empty;
 
-            DBManager.ExcuteQuery(E_DB.E_DB_ACCOUNT, "CALL `p_account_create`('zuns96', 'IAmProgrammer@960115')", (reader) =>
+            DBManager.ExcuteQuery(E_DB.E_DB_ACCOUNT, string.Format("CALL `p_account_create`('{0}', '{1}')",strID, strPassword), (reader) =>
             {
                 reader.Read();
                 byRet = Convert.ToByte(reader[0]);
                 strUserName = Convert.ToString(reader[1]);
             });
 
-            return new SignUp() { byRet = byRet, strUserName = strUserName, };
+            return new Rpy_SignUp() { byRet = byRet, strUserName = strUserName, };
         }
     }
 }
