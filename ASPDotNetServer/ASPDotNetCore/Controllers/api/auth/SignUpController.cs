@@ -21,16 +21,18 @@ namespace ASPDotNetCore.Controllers.api.auth
         private Rpy_SignUp db_account_create(string strID, string strPassword)
         {
             byte byRet = 0;
+            long lUserNo = 0L;
             string strUserName = string.Empty;
 
             DBManager.ExcuteQuery(E_DB.E_DB_ACCOUNT, string.Format("CALL `p_account_create`('{0}', '{1}')",strID, strPassword), (reader) =>
             {
                 reader.Read();
                 byRet = Convert.ToByte(reader[0]);
-                strUserName = Convert.ToString(reader[1]);
+                lUserNo = Convert.ToInt64(reader[1]);
+                strUserName = Convert.ToString(reader[2]);
             });
 
-            return new Rpy_SignUp() { byRet = byRet, strUserName = strUserName, };
+            return new Rpy_SignUp() { byRet = byRet, lUserNo = lUserNo, strUserName = strUserName, };
         }
     }
 }

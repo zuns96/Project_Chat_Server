@@ -9,8 +9,6 @@ using System.Net;
 using System.Net.WebSockets;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Threading.Tasks.Dataflow;
-using System.Text;
 
 namespace ASPDotNetCore
 {
@@ -41,34 +39,7 @@ namespace ASPDotNetCore
                 app.UseDeveloperExceptionPage();
             }
 
-            WebSocketOptions webSocketOptions = new WebSocketOptions()
-            {
-                KeepAliveInterval = TimeSpan.FromSeconds(120),
-            };
-            
-            app.UseWebSockets(webSocketOptions);
-
-            app.Use(async (context, next) =>
-            {
-                if (context.Request.Path.Equals("/ws"))
-                {
-                    if (context.WebSockets.IsWebSocketRequest)
-                    {
-                        using (WebSocket webSocket = await context.WebSockets.AcceptWebSocketAsync())
-                        {
-                            await Echo(context, webSocket);
-                        }
-                    }
-                    else
-                    {
-                        context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
-                    }
-                }
-                else
-                {
-                    await next();
-                }
-            });
+            ChatManager.Create(app);
 
             app.UseHttpsRedirection();
 
@@ -80,41 +51,6 @@ namespace ASPDotNetCore
             {
                 endpoints.MapControllers();
             });
-        }
-
-        private async Task ProcessWebSocket(HttpContext context, Func<Task> next)
-        {
-            if (context.Request.Path.Equals("/ws"))
-            {
-                if (context.WebSockets.IsWebSocketRequest)
-                {
-                    using (WebSocket webSocket = await context.WebSockets.AcceptWebSocketAsync())
-                    {
-                        await Echo(context, webSocket);
-                    }
-                }
-                else
-                {
-                    context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
-                }
-            }
-            else
-            {
-                await next();
-            }
-        }
-
-        private async Task Echo(HttpContext context, WebSocket webSocket)
-        {
-            byte[] buffer = new byte[4096];
-            WebSocketReceiveResult result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
-            while (!result.CloseStatus.HasValue)
-            {
-                await webSocket.SendAsync(new ArraySegment<byte>(buffer, 0, result.Count), result.MessageType, result.EndOfMessage, CancellationToken.None);
-
-                result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
-            }
-            await webSocket.CloseAsync(result.CloseStatus.Value, result.CloseStatusDescription, CancellationToken.None);
         }
     }
 }
