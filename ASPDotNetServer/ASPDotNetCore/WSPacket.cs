@@ -34,6 +34,7 @@ namespace ASPDotNetCore
 
         public class Rpy_Login
         {
+            public byte byRet { get; set; }
             public long lUserNo { get; set; }
             public string strUserName { get; set; }
         }
@@ -48,6 +49,7 @@ namespace ASPDotNetCore
 
         public class Rpy_Chat
         {
+            public byte byRet { get; set; }
             public long lUserNo { get; set; }
             public string strSender { get; set; }
             public string strMsg { get; set; }

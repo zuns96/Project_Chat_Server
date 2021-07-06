@@ -1,37 +1,33 @@
 ﻿using MySql.Data.MySqlClient;
 using System;
-using System.Data.Common;
 
 namespace ASPDotNetCore
 {
     public class DBConnectionService
     {
-        string m_connectionString = null;
-
-        public string ConnectionString { get { return m_connectionString; } }
+        MySqlConnection m_mySqlConnection = null;
 
         public DBConnectionService(string connectionString)
         {
-            m_connectionString = connectionString;
-        }
-
-        private MySqlConnection getConnection()
-        {
-            return new MySqlConnection(m_connectionString);
+            m_mySqlConnection = new MySqlConnection(connectionString);
+            m_mySqlConnection.Open();
         }
 
         public void ExcuteQuery(string query, Action<MySqlDataReader> readAction)
         {
             try
             {
-                using (MySqlConnection mySqlConnection = getConnection())
-                {
-                    mySqlConnection.Open();
+                Log.Write("[{0}] {1} 실행...", m_mySqlConnection.Database, query);
 
-                    MySqlCommand sqlCommand = new MySqlCommand(query, mySqlConnection);
-                    readAction(sqlCommand.ExecuteReader());
-                    
-                    mySqlConnection.Close();
+                using (MySqlCommand sqlCommand = new MySqlCommand(query, m_mySqlConnection))
+                {
+                    using (MySqlDataReader mySqlDataReader = sqlCommand.ExecuteReader())
+                    {
+
+                        Log.Write("[{0}] {1} 실행 완료...", m_mySqlConnection.Database, query);
+
+                        readAction(mySqlDataReader);
+                    }
                 }
             }
             catch

@@ -44,12 +44,6 @@ namespace ASPDotNetCore
             return null;
         }
 
-        static public void DisposeUser(ChatUser chatUser)
-        {
-            if (s_instance != null)
-                s_instance.disposeUser(chatUser);
-        }
-
         ChatManager(IApplicationBuilder app)
         {
             m_lstUsers = new List<ChatUser>();
@@ -97,83 +91,127 @@ namespace ASPDotNetCore
         private async Task ProcessPacket(WebSocket webSocket)
         {
             WebSocketReceiveResult result = null;
+            byte[] buffer = new byte[1024 * 1024];  // 1MB
+            ArraySegment<byte> segmentBuffer = new ArraySegment<byte>(buffer);
+            long lUserNo = 0L;
+            string strUserName = string.Empty;
             do
             {
-                byte[] buffer = new byte[1024 * 1024 * 10];  // 1MB
-                result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
-                string json = Encoding.UTF8.GetString(buffer);
-                Packet packet = JsonConvert.DeserializeObject<Packet>(json);
-                switch (packet.hd.iRmiID)
+                string json = string.Empty;
+                Packet packet = null;
+                WebSocketState webSocketState = webSocket.State;
+                if (webSocketState == WebSocketState.Open)
                 {
-                    case (int)E_RMIID.E_RMIID_REQ_LOGIN:
-                        {
-                            Req_Login req = JsonConvert.DeserializeObject<Req_Login>(packet.strJson);
+                    try
+                    {
+                        result = await webSocket.ReceiveAsync(segmentBuffer, CancellationToken.None);
+                        json = Encoding.UTF8.GetString(segmentBuffer.Array, 0, result.Count);
+                        packet = JsonConvert.DeserializeObject<Packet>(json);
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Write("#### Exception!!! THROWN ####");
+                        Log.Write(ex.Message);
+                        Log.Write(ex.StackTrace);
+                        Log.Write("#### Exception!!! THROWN ####");
 
-                            long lUserNo = req.lUserNo;
-                            ChatUser chatUser = getUser(lUserNo);
-                            if (chatUser == null)
+                        continue;
+                    }
+
+                    switch (packet.hd.iRmiID)
+                    {
+                        case (int)E_RMIID.E_RMIID_REQ_LOGIN:
                             {
-                                string strUserName = req.strUserName;
+                                Req_Login req = JsonConvert.DeserializeObject<Req_Login>(packet.strJson);
 
-                                chatUser = createUser(lUserNo, strUserName, webSocket);
-                                await chatUser.Do_Req_Login(req, result);
+                                lUserNo = req.lUserNo;
+                                ChatUser chatUser = getUser(lUserNo);
+                                if (chatUser == null)
+                                {
+                                    strUserName = req.strUserName;
+
+                                    chatUser = createUser(lUserNo, strUserName, webSocket);
+                                    await chatUser.Do_Req_Login(req);
+                                }
+                                else
+                                {
+
+                                }
                             }
-                            else
+                            break;
+                        case (int)E_RMIID.E_RMIID_REQ_CHAT:
+                            {
+                                Req_Chat req = JsonConvert.DeserializeObject<Req_Chat>(packet.strJson);
+
+                                Log.Write("[{0}/{1}] 채팅 브로드 캐스팅 시작...", lUserNo, strUserName);
+                                int cnt = m_lstUsers.Count;
+                                for (int i = 0; i < cnt; ++i)
+                                {
+                                    Log.Write("[{0}/{1}]({2}/{3}) 채팅 브로드 캐스팅 중...", lUserNo, strUserName, i, cnt);
+                                    await m_lstUsers[i].Do_Req_Chat(req);
+                                }
+                                Log.Write("[{0}/{1}] 채팅 브로드 캐스팅 끝...", lUserNo, strUserName);
+                            }
+                            break;
+                        default:
                             {
 
                             }
-                        }
-                        break;
-                    case (int)E_RMIID.E_RMIID_REQ_CHAT:
-                        {
-                            Req_Chat req = JsonConvert.DeserializeObject<Req_Chat>(packet.strJson);
-
-                            int cnt = m_lstUsers.Count;
-                            for (int i = 0; i < cnt; ++i)
-                            {
-                                await m_lstUsers[i].Do_Req_Chat(req, result);
-                            }
-                        }
-                        break;
-                    default:
-                        {
-
-                        }
-                        break;
+                            break;
+                    }
                 }
-            } while(!result.CloseStatus.HasValue);
-            await webSocket.CloseAsync(result.CloseStatus.Value, result.CloseStatusDescription, CancellationToken.None);
+                else if(webSocketState == WebSocketState.Aborted)
+                {
+                    break;
+                }
+            } while (!result.CloseStatus.HasValue);
+
+            disposeUser(lUserNo);
+
+            if (result.CloseStatus.HasValue)
+                await webSocket.CloseAsync(result.CloseStatus.Value, result.CloseStatusDescription, CancellationToken.None);
+            
+            webSocket.Dispose();
         }
 
-        ChatUser getUser(long userNo)
+        ChatUser getUser(long lUserNo)
         {
             lock (m_objLock)
             {
                 int cnt = m_lstUsers.Count;
                 for (int i = 0; i < cnt; ++i)
                 {
-                    if (m_lstUsers[i].UserNo == userNo)
+                    if (m_lstUsers[i].UserNo == lUserNo)
                         return m_lstUsers[i];
                 }
                 return null;
             }
         }
 
-        ChatUser createUser(long userNo, string strUserName, WebSocket webSocket)
+        ChatUser createUser(long lUserNo, string strUserName, WebSocket webSocket)
         {
             lock (m_objLock)
             {
-                ChatUser chatUser = new ChatUser(userNo, strUserName, webSocket);
+                ChatUser chatUser = new ChatUser(lUserNo, strUserName, webSocket);
                 m_lstUsers.Add(chatUser);
+
+                Log.Write("[{0}/{1}] 유저 객체 생성 완료", lUserNo, strUserName);
+
                 return chatUser;
             }
         }
 
-        void disposeUser(ChatUser chatUser)
+        void disposeUser(long lUserNo)
         {
-            if (m_lstUsers.Contains(chatUser))
+            lock (m_objLock)
             {
-                m_lstUsers.Remove(chatUser);
+                ChatUser user = getUser(lUserNo);
+                if (m_lstUsers.Contains(user))
+                {
+                    m_lstUsers.Remove(user);
+
+                    Log.Write("[{0}/{1}] 유저 객체 제거 완료", lUserNo, user.UserName);
+                }
             }
         }
     }
