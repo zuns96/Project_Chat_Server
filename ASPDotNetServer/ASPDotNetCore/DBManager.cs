@@ -89,7 +89,10 @@ namespace ASPDotNetCore
         private void excuteQuery(E_DB eDB, string query, Action<MySqlDataReader> readAction)
         {
             DBConnectionService dbConn = getDBConn(eDB);
-            dbConn.ExcuteQuery(query, readAction);
+            lock (dbConn)
+            {
+                dbConn.ExcuteQuery(query, readAction);
+            }
         }
     }
 }

@@ -5,6 +5,6 @@ https://go.microsoft.com/fwlink/?LinkID=208121.
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <_PublishTargetUrl>C:\Users\zuns9\source\repos\Project_Chat_Server\ASPDotNetServer\ASPDotNetCore\bin\Release\netcoreapp3.1\publish\</_PublishTargetUrl>
-    <History>True|2021-06-23T12:36:26.4018973Z;True|2021-06-23T15:34:42.0429260+09:00;True|2021-06-23T15:28:54.4409510+09:00;True|2021-06-23T15:22:45.3701160+09:00;</History>
+    <History>True|2021-06-30T11:11:18.3663451Z;True|2021-06-26T17:22:07.8524889+09:00;True|2021-06-25T18:50:33.2209928+09:00;True|2021-06-23T21:36:26.4018973+09:00;True|2021-06-23T15:34:42.0429260+09:00;True|2021-06-23T15:28:54.4409510+09:00;True|2021-06-23T15:22:45.3701160+09:00;</History>
   </PropertyGroup>
 </Project>

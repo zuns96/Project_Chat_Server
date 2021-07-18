@@ -1,8 +1,15 @@
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Hosting; 
+using System;
+using System.Net;
+using System.Net.WebSockets;
+using System.Threading;
+using System.Threading.Tasks;
+using System.IO;
 
 namespace ASPDotNetCore
 {
@@ -32,6 +39,8 @@ namespace ASPDotNetCore
             {
                 app.UseDeveloperExceptionPage();
             }
+
+            ChatManager.Create(app);
 
             app.UseHttpsRedirection();
 

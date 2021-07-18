@@ -7,6 +7,7 @@ namespace ASPDotNetCore
     {
         public static void Main(string[] args)
         {
+            Log.Create();
             CreateHostBuilder(args).Build().Run();
         }
 
