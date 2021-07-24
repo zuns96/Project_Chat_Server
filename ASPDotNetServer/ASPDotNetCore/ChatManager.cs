@@ -95,29 +95,32 @@ namespace ASPDotNetCore
             ArraySegment<byte> segmentBuffer = new ArraySegment<byte>(buffer);
             long lUserNo = 0L;
             string strUserName = string.Empty;
+            WebSocketState webSocketState = WebSocketState.None;
             do
             {
                 string json = string.Empty;
                 Packet packet = null;
-                WebSocketState webSocketState = webSocket.State;
-                if (webSocketState == WebSocketState.Open)
+                webSocketState = webSocket.State;
+
+                try
                 {
-                    try
-                    {
-                        result = await webSocket.ReceiveAsync(segmentBuffer, CancellationToken.None);
-                        json = Encoding.UTF8.GetString(segmentBuffer.Array, 0, result.Count);
-                        packet = JsonConvert.DeserializeObject<Packet>(json);
-                    }
-                    catch (Exception ex)
-                    {
-                        Log.Write("#### Exception!!! THROWN ####");
-                        Log.Write(ex.Message);
-                        Log.Write(ex.StackTrace);
-                        Log.Write("#### Exception!!! THROWN ####");
+                    result = await webSocket.ReceiveAsync(segmentBuffer, CancellationToken.None);
+                    json = Encoding.UTF8.GetString(segmentBuffer.Array, 0, result.Count);
+                    packet = JsonConvert.DeserializeObject<Packet>(json);
+                    webSocketState = webSocket.State;
+                }
+                catch (Exception ex)
+                {
+                    Log.Write("#### Exception!!! THROWN ####");
+                    Log.Write(ex.Message);
+                    Log.Write(ex.StackTrace);
+                    Log.Write("#### Exception!!! THROWN ####");
 
-                        continue;
-                    }
+                    continue;
+                }
 
+                if(webSocketState == WebSocketState.Open)
+                { 
                     switch (packet.hd.iRmiID)
                     {
                         case (int)E_RMIID.E_RMIID_REQ_LOGIN:
@@ -160,11 +163,7 @@ namespace ASPDotNetCore
                             break;
                     }
                 }
-                else if(webSocketState == WebSocketState.Aborted)
-                {
-                    break;
-                }
-            } while (!result.CloseStatus.HasValue);
+            } while (webSocketState == WebSocketState.Open);
 
             disposeUser(lUserNo);
 

@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-
-namespace ASPDotNetCore
+﻿namespace ASPDotNetCore
 {
     static public class WSPacket
     {
@@ -14,6 +9,14 @@ namespace ASPDotNetCore
             E_RMIID_REQ_CHAT,
             E_RMIID_RPY_CHAT,
         };
+
+        public enum ERROR_MSG_COMMON : byte
+        {
+            FAILURE = 0,        // 실패
+            SUCCESS = 1,        // 성공
+
+            MAX,
+        }
 
         public class CommonHeader
         {
@@ -39,6 +42,12 @@ namespace ASPDotNetCore
             public string strUserName { get; set; }
         }
 
+        public enum ERROR_MSG_LOGIN
+        {
+            DUPLICATE_LOGIN = 2,  // 로그인 중복
+            INVALID_PASSWORD = 3,   // 유효하지 않는 패스워드
+        }
+
         public class Req_Chat
         {
             public long lUserNo { get; set; }
@@ -54,6 +63,11 @@ namespace ASPDotNetCore
             public string strSender { get; set; }
             public string strMsg { get; set; }
             public long lTimeStamp { get; set; }
+        }
+
+        public enum ERROR_MSG_CHAT
+        {
+
         }
     }
 }
