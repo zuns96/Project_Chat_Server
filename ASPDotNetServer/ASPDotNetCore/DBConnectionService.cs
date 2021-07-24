@@ -23,7 +23,6 @@ namespace ASPDotNetCore
                 {
                     using (MySqlDataReader mySqlDataReader = sqlCommand.ExecuteReader())
                     {
-
                         Log.Write("[{0}] {1} 실행 완료...", m_mySqlConnection.Database, query);
 
                         readAction(mySqlDataReader);
